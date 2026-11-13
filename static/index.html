@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profit Leak Detector</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#172033;background:#f4f6fa}*{box-sizing:border-box}
+body{margin:0}header{background:#172b4d;color:white;padding:22px max(18px,calc((100% - 1080px)/2))}
+main{max-width:1080px;margin:22px auto;padding:0 16px}.muted{color:#667085;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.card,form,section.panel{background:white;border:1px solid #e5e9f0;border-radius:12px;padding:16px;margin-bottom:14px}
+.metric{font-size:24px;font-weight:700;margin-top:6px}.forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+label{display:block;font-size:13px;color:#475467}input{width:100%;padding:10px;border:1px solid #ccd3df;border-radius:8px;margin:5px 0 10px}
+button{padding:10px 14px;border:0;border-radius:8px;background:#2457c5;color:white;font-weight:600;cursor:pointer}
+button.secondary{background:#e9eef8;color:#172b4d}button.danger{background:#a83232}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px;border-bottom:1px solid #edf0f4;font-size:14px}
+.bad{color:#b42318;font-weight:700}.good{color:#067647;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:520px){table{display:block;overflow:auto}}
+</style>
+</head>
+<body>
+<header><h1>Profit Leak Detector</h1><div>दुकान और ऑनलाइन बिक्री का अनुमानित मुनाफा समझें</div></header>
+<main>
+<p class="muted">डेटा इसी ब्राउज़र में सेव होता है। नियमित रूप से JSON बैकअप डाउनलोड करें।</p>
+<div class="grid" id="metrics"></div>
+<section class="panel"><h2>बिक्री जोड़ें</h2><form id="saleForm"><div class="forms">
+<label>उत्पाद<input name="product" required maxlength="80"></label>
+<label>मात्रा<input name="quantity" type="number" min="0.001" step="any" required></label>
+<label>प्रति यूनिट बिक्री मूल्य (₹)<input name="price" type="number" min="0" step="any" required></label>
+<label>प्रति यूनिट खरीद लागत (₹)<input name="cost" type="number" min="0" step="any" required></label>
+</div><button>बिक्री सेव करें</button></form></section>
+<section class="panel"><h2>खर्च जोड़ें</h2><form id="expenseForm"><div class="forms">
+<label>खर्च का नाम<input name="name" required maxlength="80"></label>
+<label>राशि (₹)<input name="amount" type="number" min="0" step="any" required></label>
+</div><button>खर्च सेव करें</button></form></section>
+<section class="panel"><h2>उत्पाद के हिसाब से लाभ</h2><div id="products"></div></section>
+<section class="panel"><h2>डेटा और बैकअप</h2><div class="actions">
+<button class="secondary" id="csv">बिक्री CSV डाउनलोड</button><button class="secondary" id="backup">पूरा JSON बैकअप</button>
+<label class="actions">JSON वापस लोड करें <input id="restore" type="file" accept="application/json"></label>
+<button class="danger" id="clear">सारा स्थानीय डेटा मिटाएँ</button></div></section>
+</main>
+<script>
+const KEY='pld.v03';
+let state=load();
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{sales:[],expenses:[]}}catch{return {sales:[],expenses:[]}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function money(n){return '₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:2})}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function totals(){const revenue=state.sales.reduce((a,s)=>a+s.q*s.price,0),cogs=state.sales.reduce((a,s)=>a+s.q*s.cost,0),expenses=state.expenses.reduce((a,e)=>a+e.amount,0);return {revenue,cogs,gross:revenue-cogs,expenses,net:revenue-cogs-expenses}}
+function render(){const t=totals();document.getElementById('metrics').innerHTML=[
+['कुल बिक्री',t.revenue],['माल की लागत',t.cogs],['सकल लाभ',t.gross],['कुल खर्च',t.expenses],['अनुमानित शुद्ध लाभ',t.net]
+].map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="metric ${v<0?'bad':'good'}">${money(v)}</div></div>`).join('');
+const p={};state.sales.forEach(s=>{const x=p[s.product]||(p[s.product]={q:0,rev:0,cost:0});x.q+=s.q;x.rev+=s.q*s.price;x.cost+=s.q*s.cost});
+const rows=Object.entries(p).map(([name,x])=>({name,...x,profit:x.rev-x.cost})).sort((a,b)=>a.profit-b.profit);
+document.getElementById('products').innerHTML=rows.length?`<table><thead><tr><th>उत्पाद</th><th>मात्रा</th><th>बिक्री</th><th>लागत</th><th>योगदान लाभ</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.q}</td><td>${money(x.rev)}</td><td>${money(x.cost)}</td><td class="${x.profit<0?'bad':'good'}">${money(x.profit)}</td></tr>`).join('')}</tbody></table>':'<p class="muted">अभी कोई बिक्री दर्ज नहीं है।';
+}
+function num(v){const n=Number(v);if(!Number.isFinite(n)||n<0)throw Error('कृपया शून्य या उससे बड़ी सही संख्या भरें।');return n}
+document.getElementById('saleForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);try{const q=num(f.get('quantity'));if(q===0)throw Error('मात्रा शून्य से अधिक होनी चाहिए।');state.sales.push({product:String(f.get('product')).trim(),q,price:num(f.get('price')),cost:num(f.get('cost'))});save();e.target.reset()}catch(err){alert(err.message)}});
+document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);try{state.expenses.push({name:String(f.get('name')).trim(),amount:num(f.get('amount'))});save();e.target.reset()}catch(err){alert(err.message)}});
+function download(name,data,type){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
+document.getElementById('backup').onclick=()=>download('profit-leak-backup.json',JSON.stringify(state,null,2),'application/json');
+document.getElementById('csv').onclick=()=>{const lines=[['product','quantity','unit_price','unit_cost'],...state.sales.map(s=>[s.product,s.q,s.price,s.cost])];download('sales.csv',lines.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')};
+document.getElementById('restore').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.sales)||!Array.isArray(d.expenses))throw Error();state=d;save();alert('बैकअप लोड हो गया।')}catch{alert('यह सही बैकअप फ़ाइल नहीं है।')}e.target.value=''};
+document.getElementById('clear').onclick=()=>{if(confirm('क्या आप इसी ब्राउज़र का पूरा डेटा मिटाना चाहते हैं? पहले बैकअप लें।')){state={sales:[],expenses:[]};save()}};
+render();
+</script>
+</body></html>
