@@ -8,10 +8,9 @@ Profit Leak Detector is a lightweight, Hindi-first profit visibility tool for sm
 
 ## First customer segment
 
-Start with owner-operated micro and small retailers or home-based online sellers who:
-- track sales and costs in notebooks or scattered spreadsheets;
-- need a simple view of product-level contribution profit;
-- do not need a full GST/accounting/inventory system for this first use case.
+Start narrower: owner-operated micro retailers and small resellers who already keep sales records but cannot quickly see product-wise contribution profit. Prefer people using notebooks or spreadsheets, not shops actively seeking a replacement for a full billing/accounting system.
+
+Competitive reality: established products already offer billing, expense tracking, inventory and profit reports. Vyapar advertises a lifetime-free limited mobile plan as well as paid tiers; myBillBook lists broader invoicing and inventory plans. We should not compete as a billing/GST/accounting replacement. Our wedge is a quick, simple, Hindi-first profit-clarity workflow with no account, no subscription and customer-controlled local data. Verify competitor pricing/features at the time of any comparison because plans change.
 
 Do not market it as accounting, tax, GST, inventory or audit software.
 
@@ -85,3 +84,10 @@ Do not build paid subscriptions or cloud accounts until:
 - privacy, backup and limitations are visible to users.
 
 This is a validation target, not a claim that the targets have already been met.
+
+
+## Competitive research snapshot (14 November 2026)
+
+- Vyapar's official small-business page describes connected billing, inventory, expenses and item/bill-level profit reporting, and lists both a limited free plan and paid plans: https://vyaparapp.in/free/small-business-accounting-software
+- myBillBook's official billing page lists invoicing, inventory, online-store and barcode features in its paid plans: https://mybillbook.in/s/billing-app/
+- Implication: a generic shop billing app is a poor entry point. Position this MVP as a lightweight profit-clarity utility and assisted setup service for a narrow user group. Do not claim it is better than full accounting apps.
