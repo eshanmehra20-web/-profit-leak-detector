@@ -63,7 +63,8 @@ assert.equal(storage.get('pld.v03'), beforeInvalidInput, 'blank product must not
 assert.ok(alerts.length > 0, 'invalid form should explain the error');
 
 const restore = getElementById('restore');
-async function run() {\nawait restore.onchange({ target: {
+async function run() {
+await restore.onchange({ target: {
   files: [{ text: async () => JSON.stringify({ sales: [{ product: 'Bad', q: -1, price: 5, cost: 2 }], expenses: [] }) }],
   value: 'bad.json',
 } });
