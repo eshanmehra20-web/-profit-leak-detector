@@ -77,4 +77,6 @@ assert.match(getElementById('products').innerHTML, /&lt;img/);
 assert.doesNotMatch(getElementById('products').innerHTML, /<img/);
 assert.match(getElementById('metrics').innerHTML, /₹40/);
 
-process.stdout.write('Frontend logic tests passed: break-even display, valid form flow, blank-name rejection, invalid-backup preservation, valid restore, and HTML escaping.\\n');\n}\nrun().catch(error => { console.error(error); process.exitCode = 1; });
+process.stdout.write('Frontend logic tests passed: break-even display, valid form flow, blank-name rejection, invalid-backup preservation, valid restore, and HTML escaping.\n');
+}
+run().catch(error => { console.error(error); process.exitCode = 1; });
