@@ -6,7 +6,8 @@ Date: 2026-11-19
 - Python unit tests: 19 passed, 0 failed.
 - Python bytecode compilation: passed (`python -m compileall -q .`).
 - Browser JavaScript syntax: passed with `node --check` in GitHub Actions.
-- GitHub Actions run #20: success; Python compilation, all 19 unit tests, and browser JavaScript syntax check passed.
+- Browser logic tests: passed for break-even display, valid form entry, blank-name rejection, invalid-backup preservation, valid restore, and HTML escaping.
+- Latest GitHub Actions run #34: success; Python compilation, all 19 unit tests, JavaScript syntax, and browser logic tests passed.
 - Added test coverage for invalid numeric inputs, blank names, product aggregation, and break-even edge cases.
 
 ## Scope and limits
