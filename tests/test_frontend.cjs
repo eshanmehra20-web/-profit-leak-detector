@@ -3,8 +3,12 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const html = fs.readFileSync('static/index.html', 'utf8');
-const matches = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)];
-assert.equal(matches.length, 1, 'app must contain exactly one inline script');
+const start = html.indexOf('<script>');
+const end = html.indexOf('</script>', start + 8);
+assert.notEqual(start, -1, 'app script must exist');
+assert.notEqual(end, -1, 'app script must close');
+assert.equal(html.indexOf('<script>', start + 8), -1, 'app must contain exactly one inline script');
+const appScript = html.slice(start + 8, end);
 
 const elements = new Map();
 function getElementById(id) {
@@ -36,7 +40,7 @@ const context = {
   confirm() { return false; },
 };
 vm.createContext(context);
-vm.runInContext(matches[0][1], context, { timeout: 1000 });
+vm.runInContext(appScript, context, { timeout: 1000 });
 
 function submit(id, values) {
   const form = getElementById(id);
