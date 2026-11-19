@@ -85,3 +85,32 @@ def product_summary(sales: Iterable[Sale]) -> list[dict]:
             "is_loss_making": profit < 0,
         })
     return sorted(result, key=lambda item: item["contribution_profit"])
+
+
+def break_even_estimate(sales: Iterable[Sale], expenses: Iterable[Expense]) -> dict:
+    """Estimate break-even revenue using the current sales mix contribution margin.
+
+    Assumption: all operating expenses are treated as fixed for this estimate.
+    This is a planning estimate, not an accounting or tax calculation.
+    """
+    result = summarize(sales, expenses)
+    revenue = result["revenue"]
+    gross_profit = result["gross_profit"]
+    operating_expenses = result["expenses"]
+
+    if operating_expenses == 0:
+        target = 0.0
+    elif revenue <= 0 or gross_profit <= 0:
+        target = None
+    else:
+        contribution_margin = gross_profit / revenue
+        target = round(operating_expenses / contribution_margin, 2)
+
+    gap = None if target is None else round(max(0.0, target - revenue), 2)
+    return {
+        "break_even_revenue": target,
+        "current_revenue": revenue,
+        "additional_revenue_needed": gap,
+        "is_at_or_above_break_even": None if target is None else revenue >= target,
+        "assumption": "Operating expenses are treated as fixed; current product mix is assumed to continue.",
+    }
