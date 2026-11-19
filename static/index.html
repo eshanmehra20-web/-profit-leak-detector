@@ -52,7 +52,7 @@ function render(){const t=totals();document.getElementById('metrics').innerHTML=
 ].map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="metric ${v<0?'bad':'good'}">${money(v)}</div></div>`).join('');
 const p={};state.sales.forEach(s=>{const x=p[s.product]||(p[s.product]={q:0,rev:0,cost:0});x.q+=s.q;x.rev+=s.q*s.price;x.cost+=s.q*s.cost});
 const rows=Object.entries(p).map(([name,x])=>({name,...x,profit:x.rev-x.cost})).sort((a,b)=>a.profit-b.profit);
-document.getElementById('products').innerHTML=rows.length?`<table><thead><tr><th>उत्पाद</th><th>मात्रा</th><th>बिक्री</th><th>लागत</th><th>योगदान लाभ</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.q}</td><td>${money(x.rev)}</td><td>${money(x.cost)}</td><td class="${x.profit<0?'bad':'good'}">${money(x.profit)}</td></tr>`).join('')}</tbody></table>':'<p class="muted">अभी कोई बिक्री दर्ज नहीं है।';
+document.getElementById('products').innerHTML=rows.length?`<table><thead><tr><th>उत्पाद</th><th>मात्रा</th><th>बिक्री</th><th>लागत</th><th>योगदान लाभ</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.q}</td><td>${money(x.rev)}</td><td>${money(x.cost)}</td><td class="${x.profit<0?'bad':'good'}">${money(x.profit)}</td></tr>`).join('')}</tbody></table>' :'<p class="muted">अभी कोई बिक्री दर्ज नहीं है।</p>';
 }
 function num(v){const n=Number(v);if(!Number.isFinite(n)||n<0)throw Error('कृपया शून्य या उससे बड़ी सही संख्या भरें।');return n}
 document.getElementById('saleForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);try{const q=num(f.get('quantity'));if(q===0)throw Error('मात्रा शून्य से अधिक होनी चाहिए।');state.sales.push({product:String(f.get('product')).trim(),q,price:num(f.get('price')),cost:num(f.get('cost'))});save();e.target.reset()}catch(err){alert(err.message)}});
@@ -60,7 +60,20 @@ document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDe
 function download(name,data,type){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
 document.getElementById('backup').onclick=()=>download('profit-leak-backup.json',JSON.stringify(state,null,2),'application/json');
 document.getElementById('csv').onclick=()=>{const lines=[['product','quantity','unit_price','unit_cost'],...state.sales.map(s=>[s.product,s.q,s.price,s.cost])];download('sales.csv',lines.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')};
-document.getElementById('restore').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.sales)||!Array.isArray(d.expenses))throw Error();state=d;save();alert('बैकअप लोड हो गया।')}catch{alert('यह सही बैकअप फ़ाइल नहीं है।')}e.target.value=''};
+function validateBackup(d){
+ if(!d||!Array.isArray(d.sales)||!Array.isArray(d.expenses))throw Error('गलत बैकअप संरचना');
+ const number=(v,min)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<min)throw Error('गलत संख्या');return v};
+ const sales=d.sales.map(s=>{
+  if(!s||typeof s.product!=='string'||!s.product.trim()||s.product.trim().length>80)throw Error('गलत उत्पाद');
+  return {product:s.product.trim(),q:number(s.q,Number.MIN_VALUE),price:number(s.price,0),cost:number(s.cost,0)};
+ });
+ const expenses=d.expenses.map(x=>{
+  if(!x||typeof x.name!=='string'||!x.name.trim()||x.name.trim().length>80)throw Error('गलत खर्च');
+  return {name:x.name.trim(),amount:number(x.amount,0)};
+ });
+ return {sales,expenses};
+}
+document.getElementById('restore').onchange=async e=>{try{if(!e.target.files||!e.target.files[0])return;const d=validateBackup(JSON.parse(await e.target.files[0].text()));state=d;save();alert('बैकअप जाँचकर लोड हो गया।')}catch(err){alert('बैकअप लोड नहीं हुआ: फ़ाइल का डेटा सही नहीं है। आपका मौजूदा डेटा सुरक्षित रखा गया है।')}finally{e.target.value=''}};
 document.getElementById('clear').onclick=()=>{if(confirm('क्या आप इसी ब्राउज़र का पूरा डेटा मिटाना चाहते हैं? पहले बैकअप लें।')){state={sales:[],expenses:[]};save()}};
 render();
 </script>
