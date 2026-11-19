@@ -46,17 +46,17 @@ function load(){try{return JSON.parse(localStorage.getItem(KEY))||{sales:[],expe
 function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
 function money(n){return '₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:2})}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function totals(){const revenue=state.sales.reduce((a,s)=>a+s.q*s.price,0),cogs=state.sales.reduce((a,s)=>a+s.q*s.cost,0),expenses=state.expenses.reduce((a,e)=>a+e.amount,0);return {revenue,cogs,gross:revenue-cogs,expenses,net:revenue-cogs-expenses}}
+function totals(){const revenue=state.sales.reduce((a,s)=>a+s.q*s.price,0),cogs=state.sales.reduce((a,s)=>a+s.q*s.cost,0),expenses=state.expenses.reduce((a,e)=>a+e.amount,0),gross=revenue-cogs,margin=revenue>0?gross/revenue:0,breakEven=expenses===0?0:margin>0?expenses/margin:null,gap=breakEven===null?null:Math.max(0,breakEven-revenue);return {revenue,cogs,gross,expenses,net:gross-expenses,breakEven,gap}}
 function render(){const t=totals();document.getElementById('metrics').innerHTML=[
-['कुल बिक्री',t.revenue],['माल की लागत',t.cogs],['सकल लाभ',t.gross],['कुल खर्च',t.expenses],['अनुमानित शुद्ध लाभ',t.net]
-].map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="metric ${v<0?'bad':'good'}">${money(v)}</div></div>`).join('');
+['कुल बिक्री',t.revenue],['माल की लागत',t.cogs],['सकल लाभ',t.gross],['कुल खर्च',t.expenses],['अनुमानित शुद्ध लाभ',t.net],['ब्रेक-ईवन बिक्री लक्ष्य',t.breakEven],['लक्ष्य तक बाकी बिक्री',t.gap]
+].map(([k,v])=>`<div class="card"><div class="muted">${k}</div><div class="metric ${v<0?'bad':'good'}">${v===null?'सकारात्मक लाभ मार्जिन जरूरी':money(v)}</div></div>`).join('');
 const p={};state.sales.forEach(s=>{const x=p[s.product]||(p[s.product]={q:0,rev:0,cost:0});x.q+=s.q;x.rev+=s.q*s.price;x.cost+=s.q*s.cost});
 const rows=Object.entries(p).map(([name,x])=>({name,...x,profit:x.rev-x.cost})).sort((a,b)=>a.profit-b.profit);
 document.getElementById('products').innerHTML=rows.length?`<table><thead><tr><th>उत्पाद</th><th>मात्रा</th><th>बिक्री</th><th>लागत</th><th>योगदान लाभ</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.q}</td><td>${money(x.rev)}</td><td>${money(x.cost)}</td><td class="${x.profit<0?'bad':'good'}">${money(x.profit)}</td></tr>`).join('')}</tbody></table>' :'<p class="muted">अभी कोई बिक्री दर्ज नहीं है।</p>';
 }
 function num(v){const n=Number(v);if(!Number.isFinite(n)||n<0)throw Error('कृपया शून्य या उससे बड़ी सही संख्या भरें।');return n}
-document.getElementById('saleForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);try{const q=num(f.get('quantity'));if(q===0)throw Error('मात्रा शून्य से अधिक होनी चाहिए।');state.sales.push({product:String(f.get('product')).trim(),q,price:num(f.get('price')),cost:num(f.get('cost'))});save();e.target.reset()}catch(err){alert(err.message)}});
-document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);try{state.expenses.push({name:String(f.get('name')).trim(),amount:num(f.get('amount'))});save();e.target.reset()}catch(err){alert(err.message)}});
+document.getElementById('saleForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);try{const q=num(f.get('quantity')),product=String(f.get('product')).trim();if(!product)throw Error('उत्पाद का नाम जरूरी है।');if(q===0)throw Error('मात्रा शून्य से अधिक होनी चाहिए।');state.sales.push({product,q,price:num(f.get('price')),cost:num(f.get('cost'))});save();e.target.reset()}catch(err){alert(err.message)}});
+document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);try{const name=String(f.get('name')).trim();if(!name)throw Error('खर्च का नाम जरूरी है।');state.expenses.push({name,amount:num(f.get('amount'))});save();e.target.reset()}catch(err){alert(err.message)}});
 function download(name,data,type){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
 document.getElementById('backup').onclick=()=>download('profit-leak-backup.json',JSON.stringify(state,null,2),'application/json');
 document.getElementById('csv').onclick=()=>{const lines=[['product','quantity','unit_price','unit_cost'],...state.sales.map(s=>[s.product,s.q,s.price,s.cost])];download('sales.csv',lines.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')};
