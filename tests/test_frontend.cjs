@@ -59,7 +59,7 @@ assert.equal(storage.get('pld.v03'), beforeInvalidInput, 'blank product must not
 assert.ok(alerts.length > 0, 'invalid form should explain the error');
 
 const restore = getElementById('restore');
-await restore.onchange({ target: {
+async function run() {\nawait restore.onchange({ target: {
   files: [{ text: async () => JSON.stringify({ sales: [{ product: 'Bad', q: -1, price: 5, cost: 2 }], expenses: [] }) }],
   value: 'bad.json',
 } });
@@ -73,4 +73,4 @@ assert.match(getElementById('products').innerHTML, /&lt;img/);
 assert.doesNotMatch(getElementById('products').innerHTML, /<img/);
 assert.match(getElementById('metrics').innerHTML, /₹40/);
 
-process.stdout.write('Frontend logic tests passed: break-even display, valid form flow, blank-name rejection, invalid-backup preservation, valid restore, and HTML escaping.\\n');
+process.stdout.write('Frontend logic tests passed: break-even display, valid form flow, blank-name rejection, invalid-backup preservation, valid restore, and HTML escaping.\\n');\n}\nrun().catch(error => { console.error(error); process.exitCode = 1; });
