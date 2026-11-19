@@ -38,5 +38,9 @@ jobs:
           if len(scripts) != 1:
               raise SystemExit(f'Expected one inline script, found {len(scripts)}')
           Path('/tmp/profit-leak-app.js').write_text(scripts[0], encoding='utf-8')
+          print('Extracted JS lines:', len(scripts[0].splitlines()))
+          print('Extracted JS tail:', repr(scripts[0][-160:]))
           PY
+          wc -l /tmp/profit-leak-app.js
+          tail -n 5 /tmp/profit-leak-app.js
           node --check /tmp/profit-leak-app.js
