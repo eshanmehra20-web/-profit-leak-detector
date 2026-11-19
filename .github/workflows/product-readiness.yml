@@ -40,3 +40,5 @@ jobs:
           Path('/tmp/profit-leak-app.js').write_text(scripts[0], encoding='utf-8')
           PY
           node --check /tmp/profit-leak-app.js
+      - name: Run browser logic tests
+        run: node tests/test_frontend.cjs
